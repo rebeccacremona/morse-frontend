@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Morse Code</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/skeleton.css">
+    <link rel="stylesheet" href="css/custom.css">
+
+  </head>
+  <body>
+    <button id="toggle_controls" class="show" type="button" aria-label="Controls"><span>>></span></button>
+
+    <div class="container">
+      <div id="messages" class="row">
+        <div class="six columns">
+          <h2>Outgoing</h2>
+          <div id="message_out" class="scroll-left">
+          </div>
+          <div id="translation_out" class="scroll-left">
+          </div>
+        </div>
+
+        <div class="six columns">
+          <h2>Incoming</h2>
+          <div id="message_in" class="scroll-left">
+          </div>
+          <div id="translation_in" class="scroll-left">
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div id="controls" class="hidden">
+      <label for="dash">
+        How long is a dash? (milliseconds)
+      </label>
+      <input id="dash" name="dash" type="number" value="300" min="100" step="100">
+
+      <label for="pause">
+        How long between letters? (milliseconds)
+      </label>
+      <input id="pause" name="pause" type="number" value="1000" min="100" step="100">
+
+      <label for="word">
+        How long between words? (milliseconds)
+      </label>
+      <input id="word" name="word" type="number" value="2000" min="100" step="100">
+
+      <label for="sound">
+        Play Sounds?
+      </label>
+      <input id="sound" name="sound" type="checkbox" checked>
+
+      <label for="volume">
+        Volume
+      </label>
+      <input id="volume" name="volume" type="range" value="1" min="0" max="10">
+    </div>
+
+    <script src="./morse.js"></script>
+  </body>
+</html>
