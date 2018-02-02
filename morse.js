@@ -110,7 +110,6 @@ function pause(duration) {
 }
 
 
-
 //
 // Respond to the Spacebar
 //
@@ -121,6 +120,40 @@ var pause_start = null;
 var letter_pause_elapsed = false;
 var word_pause_elapsed = false;
 
+function start_pause_timer(){
+  pause_start = Date.now();
+}
+
+function stop_pause_timer(){
+  pause_start = null;
+  if (word_pause_elapsed){
+    handle_outgoing("/");
+  }
+  else if (letter_pause_elapsed){
+    handle_outgoing(" ");
+  }
+  letter_pause_elapsed = false;
+  word_pause_elapsed = false;
+}
+
+function get_pause_duration(){
+  if (pause_start){
+    return Date.now() - pause_start;
+  }
+}
+
+function respond_to_pauses(){
+  let pause = get_pause_duration();
+  if (pause){
+    if (pause >= word_pause){
+      word_pause_elapsed = true;
+      stop_pause_timer();
+    } else if (pause >= letter_pause){
+      letter_pause_elapsed = true;
+    }
+  }
+}
+window.setInterval(respond_to_pauses, 200);
 
 window.addEventListener('keydown', function(event){
   if (event.key == ' '){
@@ -150,50 +183,13 @@ window.addEventListener('keyup', function(event){
       signal = ".";
     }
     spacebar_pressed = null;
-    add_to_outgoing_message(signal);
-    handle_outgoing_translation(signal);
+    handle_outgoing(signal);
     if (live_oscillator){
       live_oscillator.stop();
     }
   }
 })
 
-function start_pause_timer(){
-  pause_start = Date.now();
-}
-
-function stop_pause_timer(){
-  pause_start = null;
-  if (word_pause_elapsed){
-    add_to_outgoing_message(" / ");
-    handle_outgoing_translation("/");
-  }
-  else if (letter_pause_elapsed){
-    add_to_outgoing_message(" ");
-    handle_outgoing_translation(" ");
-  }
-  letter_pause_elapsed = false;
-  word_pause_elapsed = false;
-}
-
-function get_pause_duration(){
-  if (pause_start){
-    return Date.now() - pause_start;
-  }
-}
-
-function respond_to_pauses(){
-  let pause = get_pause_duration();
-  if (pause){
-    if (pause >= word_pause){
-      word_pause_elapsed = true;
-      stop_pause_timer();
-    } else if (pause >= letter_pause){
-      letter_pause_elapsed = true;
-    }
-  }
-}
-window.setInterval(respond_to_pauses, 200);
 
 
 //
@@ -278,12 +274,6 @@ function translate_buffer(buffer){
   return to_char(tmp.join(''));
 }
 
-function handle_incoming_signal(signal, output_element){
-  let translation_or_null = get_translation(signal);
-  if (translation) {
-    output_element.push(translation);
-  }
-}
 
 //
 // Display messages and translations
@@ -293,6 +283,12 @@ const out_message_elem = document.getElementById('message_out');
 const in_message_elem = document.getElementById('message_in');
 const out_translation_elem = document.getElementById('translation_out');
 const in_translation_elem = document.getElementById('translation_in');
+
+function handle_outgoing(signal){
+    add_to_outgoing_message(signal);
+    add_to_incoming_message(signal);
+    handle_incoming_translation(signal);
+}
 
 // messages
 
@@ -307,8 +303,7 @@ function add_to_incoming_message(signal){
 // translations
 
 function handle_outgoing_translation(signal){
-  add_to_incoming_message(signal);
-  add_signal_to_translation(signal, out_buffer, in_translation_elem);
+  add_signal_to_translation(signal, out_buffer, out_translation_elem);
 }
 
 function handle_incoming_translation(signal){
