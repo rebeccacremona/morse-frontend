@@ -15,7 +15,6 @@ toggle_controls.addEventListener('click', function(event){
       this.setAttribute('aria-expanded', 'false');
       controls.classList.add('hidden');
   }
-
 });
 
 
@@ -24,18 +23,18 @@ toggle_controls.addEventListener('click', function(event){
 //
 
 const dash_input = document.getElementById('dash');
-const pause_input = document.getElementById('pause');
+const letter_input = document.getElementById('letter');
 const word_input = document.getElementById('word');
 
 var duration_dash = dash_input.value;
-var letter_pause = pause_input.value;
+var letter_pause = letter_input.value;
 var word_pause = word_input.value;
 
 dash_input.addEventListener('input', function(event){
   duration_dash = dash_input.value;
 })
-pause_input.addEventListener('input', function(event){
-  letter_pause = pause_input.value;
+letter_input.addEventListener('input', function(event){
+  letter_pause = letter_input.value;
 })
 word_input.addEventListener('input', function(event){
   word_pause = word_input.value;
@@ -119,6 +118,9 @@ function pause(duration) {
 var spacebar_pressed = null;
 var spacebar_released = null;
 var pause_start = null;
+var letter_pause_elapsed = false;
+var word_pause_elapsed = false;
+
 
 window.addEventListener('keydown', function(event){
   if (event.key == ' '){
@@ -162,6 +164,16 @@ function start_pause_timer(){
 
 function stop_pause_timer(){
   pause_start = null;
+  if (word_pause_elapsed){
+    add_to_outgoing_message(" / ");
+    handle_outgoing_translation("/");
+  }
+  else if (letter_pause_elapsed){
+    add_to_outgoing_message(" ");
+    handle_outgoing_translation(" ");
+  }
+  letter_pause_elapsed = false;
+  word_pause_elapsed = false;
 }
 
 function get_pause_duration(){
@@ -174,16 +186,15 @@ function respond_to_pauses(){
   let pause = get_pause_duration();
   if (pause){
     if (pause >= word_pause){
+      word_pause_elapsed = true;
       stop_pause_timer();
-      add_to_outgoing_message(" / ");
-      handle_outgoing_translation("/");
     } else if (pause >= letter_pause){
-      add_to_outgoing_message(" ");
-      handle_outgoing_translation(" ");
+      letter_pause_elapsed = true;
     }
   }
 }
-window.setInterval(respond_to_pauses, 100);
+window.setInterval(respond_to_pauses, 200);
+
 
 //
 // Morse/Chars Translation
@@ -242,17 +253,16 @@ var in_buffer = [];
 function get_translation(signal, buffer){
   switch(signal){
     // the word is over:
-    // return a translation of the buffer
-    // and a trailing space
+    // return a translation of the buffer and a trailing space
     case '/':
       if (buffer.length > 0){
         return translate_buffer(buffer) + " ";
       }
-      return null;
-    // the letter is over; return a translation of the buffer
+      return " ";
+    // the letter is over: return a translation of the buffer
     case ' ':
       return translate_buffer(buffer);
-    // the letter isn't over; push signal onto the buffer
+    // the letter isn't over: push signal onto the buffer
     default:
       buffer.push(signal);
       return null;
@@ -287,11 +297,11 @@ const in_translation_elem = document.getElementById('translation_in');
 // messages
 
 function add_to_outgoing_message(signal){
-  p_to_dom(signal, out_message_elem);
+  elem_to_dom(signal, out_message_elem);
 }
 
 function add_to_incoming_message(signal){
-  p_to_dom(signal, in_message_elem);
+  elem_to_dom(signal, in_message_elem);
 }
 
 // translations
@@ -308,15 +318,15 @@ function add_signal_to_translation(signal, buffer, element){
   let translation = get_translation(signal, buffer);
   if (translation){
     console.log(translation);
-    p_to_dom(translation, element);
+    elem_to_dom(translation, element, 'span');
   }
 }
 
 // utils
 
-function p_to_dom(text, element){
-  let p = document.createElement('p');
+function elem_to_dom(text, target, type='p'){
+  let p = document.createElement(type);
   let t = document.createTextNode(text);
   p.appendChild(t);
-  element.appendChild(p);
+  target.appendChild(p);
 }

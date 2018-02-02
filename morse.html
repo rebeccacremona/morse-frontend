@@ -21,17 +21,17 @@
       <label for="dash">
         How long is a dash? (milliseconds)
       </label>
-      <input id="dash" name="dash" type="number" value="300" min="100" step="100">
+      <input id="dash" name="dash" type="number" value="300" min="200" step="100">
 
-      <label for="pause">
+      <label for="letter">
         How long between letters? (milliseconds)
       </label>
-      <input id="pause" name="pause" type="number" value="1000" min="100" step="100">
+      <input id="letter" name="letter" type="number" value="1000" min="200" step="100">
 
       <label for="word">
         How long between words? (milliseconds)
       </label>
-      <input id="word" name="word" type="number" value="2000" min="100" step="100">
+      <input id="word" name="word" type="number" value="2000" min="200" step="100">
 
       <label for="sound">
         Play Sounds?
@@ -50,7 +50,7 @@
           <h2>Outgoing</h2>
           <div id="message_out" class="scroll-left" role="log">
           </div>
-          <div id="translation_out" class="scroll-left">
+          <div id="translation_out" class="translation">
           </div>
         </div>
 
@@ -58,7 +58,7 @@
           <h2>Incoming</h2>
           <div id="message_in" class="scroll-left" role="log">
           </div>
-          <div id="translation_in" class="scroll-left">
+          <div id="translation_in" class="translation">
           </div>
         </div>
 
