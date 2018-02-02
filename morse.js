@@ -6,15 +6,13 @@ const toggle_controls = document.getElementById('toggle_controls');
 const controls = document.getElementById('controls');
 
 toggle_controls.addEventListener('click', function(event){
-  if(this.classList.contains('show')){
+  if(this.getAttribute('aria-expanded') == 'false' ){
       this.innerHTML = '<<';
-      this.classList.remove('show');
-      this.classList.add('hide');
+      this.setAttribute('aria-expanded', 'true');
       controls.classList.remove('hidden');
   } else {
       this.innerHTML = '>>';
-      this.classList.remove('hide');
-      this.classList.add('show');
+      this.setAttribute('aria-expanded', 'false');
       controls.classList.add('hidden');
   }
 
