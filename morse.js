@@ -307,7 +307,8 @@ function add_to_incoming_message(signal){
 // translations
 
 function handle_outgoing_translation(signal){
-  add_signal_to_translation(signal, out_buffer, out_translation_elem);
+  add_to_incoming_message(signal);
+  add_signal_to_translation(signal, out_buffer, in_translation_elem);
 }
 
 function handle_incoming_translation(signal){
