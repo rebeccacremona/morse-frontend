@@ -65,12 +65,12 @@ volume_input.addEventListener('input', function(event){
 // https://stackoverflow.com/a/41077092
 //
 
-const frequency = 600 // Hz
-const type = 'triangle' // {sin, square, sawtooth, triangle}
+const frequency = 600; // Hz
+const type = 'triangle'; // {sin, square, sawtooth, triangle}
 const beep_duration = {
   "dot": 50, // ms
   "dash": 225 // ms
-}
+};
 const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
 var live_oscillator;
 
@@ -118,10 +118,12 @@ function pause(duration) {
 
 var spacebar_pressed = null;
 var spacebar_released = null;
+var pause_start = null;
 
 window.addEventListener('keydown', function(event){
   if (event.key == ' '){
     event.preventDefault();
+    stop_pause_timer();
     // key press event fires continuously while key is held down;
     // only act on initial key press event
     if (!spacebar_pressed){
@@ -130,14 +132,6 @@ window.addEventListener('keydown', function(event){
         live_oscillator.start();
       }
       spacebar_pressed = Date.now();
-      if (spacebar_released){
-        let waited = spacebar_pressed - spacebar_released;
-        if (waited >= word_pause){
-          add_to_outgoing(" / ");
-        } else if (waited >= letter_pause){
-          add_to_outgoing(" ");
-        }
-      }
       spacebar_released = null;
     }
   }
@@ -145,38 +139,184 @@ window.addEventListener('keydown', function(event){
 
 window.addEventListener('keyup', function(event){
   if (event.key == ' '){
-    spacebar_released = Date.now()
+    start_pause_timer();
+    spacebar_released = Date.now();
     let signal;
     if (spacebar_released - spacebar_pressed >= duration_dash){
       signal = "-";
     } else {
-      signal = "."
+      signal = ".";
     }
     spacebar_pressed = null;
-    add_to_outgoing(signal)
+    add_to_outgoing_message(signal);
+    handle_outgoing_translation(signal);
     if (live_oscillator){
       live_oscillator.stop();
     }
   }
 })
 
-//
-// Display messages
-//
-const outgoing_element = document.getElementById('message_out');
-const incoming_element = document.getElementById('message_in');
-
-function add_to_outgoing(signal){
-  add_signal_to_message(signal, outgoing_element);
+function start_pause_timer(){
+  pause_start = Date.now();
 }
 
-function add_to_incoming(signal){
-  add_signal_to_message(signal, incoming_element);
+function stop_pause_timer(){
+  pause_start = null;
 }
 
-function add_signal_to_message(signal, element){
+function get_pause_duration(){
+  if (pause_start){
+    return Date.now() - pause_start;
+  }
+}
+
+function respond_to_pauses(){
+  let pause = get_pause_duration();
+  if (pause){
+    if (pause >= word_pause){
+      stop_pause_timer();
+      add_to_outgoing_message(" / ");
+      handle_outgoing_translation("/");
+    } else if (pause >= letter_pause){
+      add_to_outgoing_message(" ");
+      handle_outgoing_translation(" ");
+    }
+  }
+}
+window.setInterval(respond_to_pauses, 100);
+
+//
+// Morse/Chars Translation
+//
+
+const chars_to_morse = {
+  'A': '.-',     'B': '-...',   'C': '-.-.',
+  'D': '-..',    'E': '.',      'F': '..-.',
+  'G': '--.',    'H': '....',   'I': '..',
+  'J': '.---',   'K': '-.-',    'L': '.-..',
+  'M': '--',     'N': '-.',     'O': '---',
+  'P': '.--.',   'Q': '--.-',   'R': '.-.',
+  'S': '...',    'T': '-',      'U': '..-',
+  'V': '...-',   'W': '.--',    'X': '-..-',
+  'Y': '-.--',   'Z': '--..',
+
+  '0': '-----',  '1': '.----',  '2': '..---',
+  '3': '...--',  '4': '....-',  '5': '.....',
+  '6': '-....',  '7': '--...',  '8': '---..',
+  '9': '----.'
+};
+
+// Since javascript doesn't have dictionary comprehensions
+// (or, indeed, dictionaries at all...)
+const morse_to_chars =
+  Object.keys(chars_to_morse).reduce(
+    function(obj, key) {
+      obj[chars_to_morse[key]] = key;
+      return obj;
+    }, {})
+;
+
+function to_morse(char){
+  try {
+    return chars_to_morse[char];
+  } catch (err) {
+    console.error("Can't translate char to morse code.");
+  }
+}
+
+function to_char(morse){
+  try {
+    return morse_to_chars[morse];
+  } catch (err) {
+    console.error("Invalid morse code.");
+  }
+}
+
+//
+// Trigger Translation
+//
+
+var out_buffer = [];
+var in_buffer = [];
+
+function get_translation(signal, buffer){
+  switch(signal){
+    // the word is over:
+    // return a translation of the buffer
+    // and a trailing space
+    case '/':
+      if (buffer.length > 0){
+        return translate_buffer(buffer) + " ";
+      }
+      return null;
+    // the letter is over; return a translation of the buffer
+    case ' ':
+      return translate_buffer(buffer);
+    // the letter isn't over; push signal onto the buffer
+    default:
+      buffer.push(signal);
+      return null;
+  }
+}
+
+function translate_buffer(buffer){
+  // make a local copy of the buffer
+  let tmp = buffer.slice();
+  // reset thge global buffer; fancy due to js referencing behavior
+  // https://stackoverflow.com/a/13104500
+  buffer.length = 0
+  return to_char(tmp.join(''));
+}
+
+function handle_incoming_signal(signal, output_element){
+  let translation_or_null = get_translation(signal);
+  if (translation) {
+    output_element.push(translation);
+  }
+}
+
+//
+// Display messages and translations
+//
+
+const out_message_elem = document.getElementById('message_out');
+const in_message_elem = document.getElementById('message_in');
+const out_translation_elem = document.getElementById('translation_out');
+const in_translation_elem = document.getElementById('translation_in');
+
+// messages
+
+function add_to_outgoing_message(signal){
+  p_to_dom(signal, out_message_elem);
+}
+
+function add_to_incoming_message(signal){
+  p_to_dom(signal, in_message_elem);
+}
+
+// translations
+
+function handle_outgoing_translation(signal){
+  add_signal_to_translation(signal, out_buffer, out_translation_elem);
+}
+
+function handle_incoming_translation(signal){
+  add_signal_to_translation(signal, in_buffer, in_translation_elem);
+}
+
+function add_signal_to_translation(signal, buffer, element){
+  let translation = get_translation(signal, buffer);
+  if (translation){
+    console.log(translation);
+    p_to_dom(translation, element);
+  }
+}
+
+// utils
+
+function p_to_dom(text, element){
   let p = document.createElement('p');
-  let t = document.createTextNode(signal);
-  p.appendChild(t)
+  let t = document.createTextNode(text);
+  p.appendChild(t);
   element.appendChild(p);
 }

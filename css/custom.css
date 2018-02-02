@@ -87,9 +87,9 @@ html, #messages * {
  -webkit-transform:translateX(100%);
  transform:translateX(100%);
  /* Apply animation to this element */
- -moz-animation: scroll-left 10s linear 1;
- -webkit-animation: scroll-left 10s linear 1;
- animation: scroll-left 10s linear 1;
+ -moz-animation: scroll-left 30s linear 1;
+ -webkit-animation: scroll-left 30s linear 1;
+ animation: scroll-left 30s linear 1;
 }
 /* Move it (define the animation) */
 @-moz-keyframes scroll-left {
