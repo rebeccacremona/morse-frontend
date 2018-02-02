@@ -228,19 +228,19 @@ const morse_to_chars =
 ;
 
 function to_morse(char){
-  try {
-    return chars_to_morse[char];
-  } catch (err) {
+  let morse = chars_to_morse[char];
+  if (!morse){
     console.error("Can't translate char to morse code.");
   }
+  return morse
 }
 
 function to_char(morse){
-  try {
-    return morse_to_chars[morse];
-  } catch (err) {
+  let char = morse_to_chars[morse];
+  if (!char){
     console.error("Invalid morse code.");
   }
+  return char;
 }
 
 //
@@ -256,12 +256,12 @@ function get_translation(signal, buffer){
     // return a translation of the buffer and a trailing space
     case '/':
       if (buffer.length > 0){
-        return translate_buffer(buffer) + " ";
+        return translate_buffer(buffer) || "" + " ";
       }
       return " ";
     // the letter is over: return a translation of the buffer
     case ' ':
-      return translate_buffer(buffer);
+      return translate_buffer(buffer) || "";
     // the letter isn't over: push signal onto the buffer
     default:
       buffer.push(signal);
