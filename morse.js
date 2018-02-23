@@ -25,10 +25,12 @@ toggle_controls.addEventListener('click', function(event){
 const dash_input = document.getElementById('dash');
 const letter_input = document.getElementById('letter');
 const word_input = document.getElementById('word');
+const over_input = document.getElementById('over');
 
 var duration_dash = dash_input.value;
 var letter_pause = letter_input.value;
 var word_pause = word_input.value;
+var over_pause = over_input.value;
 
 dash_input.addEventListener('input', function(event){
   duration_dash = dash_input.value;
@@ -38,6 +40,9 @@ letter_input.addEventListener('input', function(event){
 })
 word_input.addEventListener('input', function(event){
   word_pause = word_input.value;
+})
+over_input.addEventListener('input', function(event){
+  over_pause = over_input.value;
 })
 
 
@@ -119,6 +124,7 @@ var spacebar_released = null;
 var pause_start = null;
 var letter_pause_elapsed = false;
 var word_pause_elapsed = false;
+var over_pause_elapsed = false;
 
 function start_pause_timer(){
   pause_start = Date.now();
@@ -126,7 +132,15 @@ function start_pause_timer(){
 
 function stop_pause_timer(){
   pause_start = null;
-  if (word_pause_elapsed){
+  if (over_pause_elapsed){
+    add_outgoing_signal("//");
+    // transmit/display
+    strip_trailing_space(translated_buffer);
+    console.log(JSON.stringify(translated_buffer));
+    display_incoming_message(translated_buffer);
+    reset_buffer(translated_buffer);
+  }
+  else if (word_pause_elapsed){
     add_outgoing_signal("/");
   }
   else if (letter_pause_elapsed){
@@ -134,6 +148,7 @@ function stop_pause_timer(){
   }
   letter_pause_elapsed = false;
   word_pause_elapsed = false;
+  over_pause_elapsed = false;
 }
 
 function get_pause_duration(){
@@ -145,9 +160,11 @@ function get_pause_duration(){
 function respond_to_pauses(){
   let pause = get_pause_duration();
   if (pause){
-    if (pause >= word_pause){
-      word_pause_elapsed = true;
+    if (pause >= over_pause){
+      over_pause_elapsed = true;
       stop_pause_timer();
+    } else if (pause >= word_pause){
+      word_pause_elapsed = true;
     } else if (pause >= letter_pause){
       letter_pause_elapsed = true;
     }
@@ -259,17 +276,14 @@ function translate(signal){
   switch(signal){
     // the word is over
     case '/':
+    case '//':
       if (in_buffer.length > 0){
         translated = translate_buffer(in_buffer);
         if (translated.english){
           translated_buffer.push(new Character(translated.morse, translated.english));
-
-          // transmit/display
-          console.log(JSON.stringify(translated_buffer));
-          display_incoming_message(translated_buffer);
-          reset_buffer(translated_buffer);
         }
       }
+      translated_buffer.push(new Space());
       break;
     // the letter is over
     case ' ':
@@ -285,13 +299,36 @@ function translate(signal){
 }
 
 function translate_buffer(buffer){
-  // make a local copy of the buffer
   let tmp = buffer.slice().join('');
   reset_buffer(buffer);
   return {
     "morse": tmp,
     "english" : to_char(tmp)
   };
+}
+
+function get_morse_string(buffer){
+  let str = ""
+  for (let elem of buffer){
+    if (elem instanceof Space){
+      str += "/";
+    } else {
+      str += elem.morse;
+    }
+  }
+  return str
+}
+
+function get_translation_string(buffer){
+  let str = ""
+  for (let elem of buffer){
+    if (elem instanceof Space){
+      str += " ";
+    } else {
+      str += elem.english;
+    }
+  }
+  return str
 }
 
 
@@ -304,8 +341,8 @@ const in_message_elem = document.getElementById('message_in');
 const in_translation_elem = document.getElementById('translation_in');
 
 function add_outgoing_signal(signal){
-    display_outgoing_signal(signal);
-    translate(signal);
+  display_outgoing_signal(signal);
+  translate(signal);
 }
 
 // messages
@@ -314,9 +351,15 @@ function display_outgoing_signal(signal){
   elem_to_dom(signal, out_message_elem);
 }
 
+function strip_trailing_space(buffer){
+  if (buffer[buffer.length - 1] instanceof Space){
+    buffer.pop();
+  }
+}
+
 function display_incoming_message(buffer){
-  elem_to_dom(buffer.map(char => char.morse).join(" "), in_message_elem);
-  elem_to_dom(buffer.map(char => char.english).join(""), in_translation_elem);
+  elem_to_dom(get_morse_string(buffer), in_message_elem);
+  elem_to_dom(get_translation_string(buffer), in_translation_elem);
 }
 
 // utils
