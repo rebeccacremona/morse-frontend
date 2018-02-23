@@ -127,10 +127,10 @@ function start_pause_timer(){
 function stop_pause_timer(){
   pause_start = null;
   if (word_pause_elapsed){
-    handle_outgoing("/");
+    add_outgoing_signal("/");
   }
   else if (letter_pause_elapsed){
-    handle_outgoing(" ");
+    add_outgoing_signal(" ");
   }
   letter_pause_elapsed = false;
   word_pause_elapsed = false;
@@ -183,7 +183,7 @@ window.addEventListener('keyup', function(event){
       signal = ".";
     }
     spacebar_pressed = null;
-    handle_outgoing(signal);
+    add_outgoing_signal(signal);
     if (live_oscillator){
       live_oscillator.stop();
     }
@@ -243,35 +243,55 @@ function to_char(morse){
 // Trigger Translation
 //
 
-var out_buffer = [];
 var in_buffer = [];
+var translated_buffer = [];
 
-function get_translation(signal, buffer){
+class Character {
+  constructor(morse, english) {
+    this.morse = morse;
+    this.english = english;
+  }
+}
+
+class Space {}
+
+function translate(signal){
   switch(signal){
-    // the word is over:
-    // return a translation of the buffer and a trailing space
+    // the word is over
     case '/':
-      if (buffer.length > 0){
-        return translate_buffer(buffer) || "" + " ";
+      if (in_buffer.length > 0){
+        translated = translate_buffer(in_buffer);
+        if (translated.english){
+          translated_buffer.push(new Character(translated.morse, translated.english));
+
+          // transmit/display
+          console.log(JSON.stringify(translated_buffer));
+          display_incoming_message(translated_buffer);
+          reset_buffer(translated_buffer);
+        }
       }
-      return " ";
-    // the letter is over: return a translation of the buffer
+      break;
+    // the letter is over
     case ' ':
-      return translate_buffer(buffer) || "";
+      translated = translate_buffer(in_buffer);
+      if (translated.english){
+        translated_buffer.push(new Character(translated.morse, translated.english));
+      }
+      break;
     // the letter isn't over: push signal onto the buffer
     default:
-      buffer.push(signal);
-      return null;
+      in_buffer.push(signal);
   }
 }
 
 function translate_buffer(buffer){
   // make a local copy of the buffer
-  let tmp = buffer.slice();
-  // reset thge global buffer; fancy due to js referencing behavior
-  // https://stackoverflow.com/a/13104500
-  buffer.length = 0
-  return to_char(tmp.join(''));
+  let tmp = buffer.slice().join('');
+  reset_buffer(buffer);
+  return {
+    "morse": tmp,
+    "english" : to_char(tmp)
+  };
 }
 
 
@@ -284,38 +304,20 @@ const in_message_elem = document.getElementById('message_in');
 const out_translation_elem = document.getElementById('translation_out');
 const in_translation_elem = document.getElementById('translation_in');
 
-function handle_outgoing(signal){
-    add_to_outgoing_message(signal);
-    add_to_incoming_message(signal);
-    handle_incoming_translation(signal);
+function add_outgoing_signal(signal){
+    display_outgoing_signal(signal);
+    translate(signal);
 }
 
 // messages
 
-function add_to_outgoing_message(signal){
+function display_outgoing_signal(signal){
   elem_to_dom(signal, out_message_elem);
 }
 
-function add_to_incoming_message(signal){
-  elem_to_dom(signal, in_message_elem);
-}
-
-// translations
-
-function handle_outgoing_translation(signal){
-  add_signal_to_translation(signal, out_buffer, out_translation_elem);
-}
-
-function handle_incoming_translation(signal){
-  add_signal_to_translation(signal, in_buffer, in_translation_elem);
-}
-
-function add_signal_to_translation(signal, buffer, element){
-  let translation = get_translation(signal, buffer);
-  if (translation){
-    console.log(translation);
-    elem_to_dom(translation, element, 'span');
-  }
+function display_incoming_message(buffer){
+  elem_to_dom(buffer.map(char => char.morse).join(" "), in_message_elem);
+  elem_to_dom(buffer.map(char => char.english).join(""), in_translation_elem);
 }
 
 // utils
@@ -325,4 +327,11 @@ function elem_to_dom(text, target, type='p'){
   let t = document.createTextNode(text);
   p.appendChild(t);
   target.appendChild(p);
+}
+
+function reset_buffer(buffer){
+  // Empties a list.
+  // Fancy due to js referencing behavior
+  // https://stackoverflow.com/a/13104500
+  buffer.length = 0;
 }

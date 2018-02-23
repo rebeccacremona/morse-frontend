@@ -69,17 +69,17 @@ html, #messages * {
 
 .translation {
   text-transform: lowercase;
-  text-align: right;
+/*  text-align: right;
   margin: auto;
   margin-top: 1px;
   padding: 0 25px;
-  max-width: 700px;
+  max-width: 700px;*/
 }
 
 
 /* http://www.html.am/html-codes/marquees/scrolling-text.cfm */
 .scroll-left {
- height: 40px;
+ height: 50px;
  overflow: hidden;
  position: relative;
 }
@@ -89,7 +89,8 @@ html, #messages * {
  width: 100%;
  height: 100%;
  margin: 0;
- line-height: 40px;
+ line-height: 20px;
+ font-size: 12px;
  text-align: left;
  /* Starting position */
  -moz-transform:translateX(100%);
