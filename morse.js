@@ -301,7 +301,6 @@ function translate_buffer(buffer){
 
 const out_message_elem = document.getElementById('message_out');
 const in_message_elem = document.getElementById('message_in');
-const out_translation_elem = document.getElementById('translation_out');
 const in_translation_elem = document.getElementById('translation_in');
 
 function add_outgoing_signal(signal){
