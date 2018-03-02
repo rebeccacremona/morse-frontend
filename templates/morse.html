@@ -7,9 +7,10 @@
     <title>Morse Code</title>
 
     <link href="https://fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
-    <link rel="stylesheet" href="css/normalize.css">
-    <link rel="stylesheet" href="css/skeleton.css">
-    <link rel="stylesheet" href="css/custom.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/normalize.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/skeleton.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/morse.css')}}">
 
   </head>
   <body>
@@ -68,6 +69,6 @@
       </div>
     </div>
 
-    <script src="./morse.js"></script>
+    <script src="{{ url_for('static', filename='js/morse.js')}}"></script>
   </body>
 </html>

@@ -136,8 +136,10 @@ function stop_pause_timer(){
     add_outgoing_signal("//");
     // transmit/display
     strip_trailing_space(translated_buffer);
-    console.log(JSON.stringify(translated_buffer));
-    display_incoming_message(translated_buffer);
+    if (translated_buffer.length > 0){
+      transmit(get_complete_string(translated_buffer));
+      display_incoming_message(translated_buffer);
+    }
     reset_buffer(translated_buffer);
   }
   else if (word_pause_elapsed){
@@ -314,9 +316,10 @@ function get_morse_string(buffer){
       str += "/";
     } else {
       str += elem.morse;
+      str += " " ;
     }
   }
-  return str
+  return str.trim()
 }
 
 function get_translation_string(buffer){
@@ -329,6 +332,10 @@ function get_translation_string(buffer){
     }
   }
   return str
+}
+
+function get_complete_string(buffer){
+  return get_morse_string(buffer) + "\n" + get_translation_string(buffer)
 }
 
 
@@ -360,6 +367,21 @@ function strip_trailing_space(buffer){
 function display_incoming_message(buffer){
   elem_to_dom(get_morse_string(buffer), in_message_elem);
   elem_to_dom(get_translation_string(buffer), in_translation_elem);
+}
+
+function transmit(message){
+  fetch("/transmit", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: 'include',
+    body: JSON.stringify({
+      "message": message,
+    })
+  }).then(res => {
+    console.log("Response to transmission: ", res);
+  });
 }
 
 // utils
