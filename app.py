@@ -101,13 +101,13 @@ def format_for_screen(message):
 ###
 
 @app.route('/', methods=['GET'])
-# @login_required
+@login_required
 def morse():
     return render_template('morse.html')
 
 
 @app.route('/transmit', methods=['POST'])
-# @login_required
+@login_required
 def transmit():
     message = request.json.get('message')
     if message:
